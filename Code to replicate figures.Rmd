@@ -9,7 +9,7 @@ install.packages("/Users/ianxu/Library/Mobile Documents/com~apple~CloudDocs/Docu
                  repo = NULL,
                  type = "source")
 
-library(ReplicateMST2018)
+library(ReplicateMST2018, ggplot2)
 ```
 
 Define parameters
