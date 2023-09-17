@@ -7,10 +7,10 @@ Description: This package has the functions needed to replicate Mogstad, Santos,
 Encoding: UTF-8
 Imports:
   dplyr,
-  stringr,
   glue,
   lpSolve,
-  R6
+  R6,
+  stringr
 LazyData: true
 License: GPL
 RoxygenNote: 7.2.3

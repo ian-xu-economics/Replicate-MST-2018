@@ -120,8 +120,8 @@ compute_bounds = function(tp, bases, dgp, assumptions = NULL){
     }
   }
 
-  Optimum_upper = lp(direction="max",objective.in,const.mat,const.dir,const.rhs)
-  Optimum_lower = lp(direction="min",objective.in,const.mat,const.dir,const.rhs)
+  Optimum_upper = lpSolve::lp(direction="max",objective.in,const.mat,const.dir,const.rhs)
+  Optimum_lower = lpSolve::lp(direction="min",objective.in,const.mat,const.dir,const.rhs)
 
   return(list(upper_bound = Optimum_upper$objval,
               upper_solution = Optimum_upper$solution,
