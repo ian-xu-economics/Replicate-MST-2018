@@ -9,7 +9,8 @@ install.packages("/Users/ianxu/Library/Mobile Documents/com~apple~CloudDocs/Docu
                  repo = NULL,
                  type = "source")
 
-library(ReplicateMST2018, ggplot2)
+# pacman::p_load will install the packages if not installed, then load them.
+pacman::p_load(ReplicateMST2018, tidyverse, glue)
 ```
 
 Define parameters
