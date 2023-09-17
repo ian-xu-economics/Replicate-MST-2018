@@ -1,0 +1,16 @@
+Package: ReplicateMST2018
+Type: Package
+Title: Replicate Mogstad, Santos, and Torgovitsky (2018)
+Version: 0.1.0
+Authors@R: person("Ian", "Xu", email = "ianxu@uchicago.edu", role = "cre")
+Description: This package has the functions needed to replicate Mogstad, Santos, and Torgovitsky (2018).
+Encoding: UTF-8
+Imports:
+  dplyr,
+  stringr,
+  glue,
+  lpSolve,
+  R6
+LazyData: true
+License: GPL
+RoxygenNote: 7.2.3
