@@ -14,4 +14,4 @@ To generate the Figures 1-8 found in Mogstad, Santos, and Torgovitsky (2018), do
 
 ## Source Code
 
-Source code can be found within the `R` folder in the folder `ReplicatMST2018`.
+Source code can be found within the `R` folder in the folder `ReplicateMST2018`.
