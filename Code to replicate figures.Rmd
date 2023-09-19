@@ -5,7 +5,7 @@ date: "2023-09-06"
 ---
 Install and load packages
 ```{r}
-#install.packages("/Users/ianxu/Downloads/Replicate-MST-2018-main/ReplicateMST2018_0.1.0.tar.gz", repo = NULL,type = "source")
+devtools::install_github("https://github.com/Ian-Shoe/Replicate-MST-2018")
 
 library(ReplicateMST2018)
 library(tidyverse)
@@ -18,201 +18,63 @@ dgp = dgp_MST2018()
 ```
 
 Figure 1
-```{r}
-ivslope_weight = compute_average_weights_ivlike(ivslope(dgp), 
-                                                dgp)
+```{r, warning = FALSE}
+Fig1_d0 = create_plot(dgp = dgp, 
+                      d = 0,
+                      upper = TRUE,
+                      weights_tp = list(list(name = "LATE(u1, u2)", int_limits = c(0.35, 0.9))),
+                      weights_ivlike = list(ivslope(dgp)),
+                      basis = "dgp_mtr",
+                      title = "Figure 1.1")
 
-LATE_weight = compute_average_weights(list(name = "LATE(u1, u2)", 
-                                           int_limits = c(0.35, 0.9)),
-                                      dgp)
+Fig1_d1 = create_plot(dgp = dgp, 
+                      d = 1,
+                      upper = TRUE,
+                      weights_tp = list(list(name = "LATE(u1, u2)", int_limits = c(0.35, 0.9))),
+                      weights_ivlike = list(ivslope(dgp)),
+                      basis = "dgp_mtr",
+                      title = "Figure 1.2")
 
-ev = data.frame(u = seq(0, 1, 0.01),
-                z = 1)
-
-mtr_df = data.frame(u = ev$u,
-                    m0_values = evaluate_mtr(mtr = dgp$mtrs[[1]],
-                                             ev = ev),
-                    m1_values = evaluate_mtr(mtr = dgp$mtrs[[2]],
-                                             ev = ev))
-
-Fig1_D0 = ggplot(mtr_df, 
-                 aes(x = u)) + 
-  geom_line(aes(y = m0_values, color = "m_0(u)")) + 
-  geom_segment(data = LATE_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "LATE(0.35, 0.9)"),
-               linewidth = 1) +
-  geom_segment(data = ivslope_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "IV Slope"),
-               linewidth = 1) +
-  scale_y_continuous(name = NULL,
-                     limits = c(-4,4)) + 
-  scale_x_continuous(name = "u",
-                     limits = c(0,1)) +
-  scale_color_manual(name = NULL,
-                     breaks = c("m_0(u)", "LATE(0.35, 0.9)", "IV Slope"),
-                     values = c("black", "red", "blue")) +
-   theme(legend.text=element_text(size = 14),
-         legend.position = "bottom") +
-  ggtitle("Figure 1.1 (D=0)")
-
-Fig1_D1 = ggplot(mtr_df, 
-                 aes(x = u)) + 
-  geom_line(aes(y = m1_values, 
-                color = "m_1(u)")) + 
-  geom_segment(data = LATE_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "LATE(0.35, 0.9)"),
-               linewidth = 1) +
-  geom_segment(data = ivslope_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "IV Slope"),
-               linewidth = 1) +
-  scale_y_continuous(name = NULL,
-                     limits = c(-4,4)) +
-  scale_x_continuous(name = "u",
-                     limits = c(0,1)) +
-  scale_color_manual(name = NULL,
-                     breaks = c("m_1(u)", "LATE(0.35, 0.9)", "IV Slope"),
-                     values = c("black", "red", "blue")) +
-  theme(legend.text=element_text(size = 14),
-        legend.position = "bottom") +
-  ggtitle("Figure 1.2 (D=1)")
-
-Fig1_D0
-Fig1_D1
+Fig1_d0
+Fig1_d1
 ```
 
 Figure 2
-```{r}
-ivslope_weight = compute_average_weights_ivlike(ivslope(dgp), 
-                                                dgp)
-LATE_weight = compute_average_weights(list(name = "LATE(u1, u2)",
-                                           int_limits = c(0.35, 0.9)),
-                                      dgp)
+```{r, warning = FALSE}
+bounds2 = compute_bounds(tp = late(dgp = dgp, u1 = 0.35, u2 = 0.9), 
+                         bases = list(constantspline_basis(c(0, 1, 0.35, 0.9, dgp$pscore)),
+                                      constantspline_basis(c(0, 1, 0.35, 0.9, dgp$pscore))),
+                         dgp = dgp,
+                         assumptions = list("ivslope"))
 
-bounds2 = ReplicateMST2018::compute_bounds(tp = late(dgp = dgp, u1 = 0.35, u2 = 0.9), 
-             bases = list(constantspline_basis(c(0, 1, 0.35, 0.9, dgp$pscore)),
-                          constantspline_basis(c(0, 1, 0.35, 0.9, dgp$pscore))),
-             dgp = dgp,
-             assumptions = list("ivslope"))
+lowerbound = round(bounds2$lower_bound, digits = 3)
+upperbound = round(bounds2$upper_bound, digits = 3)
 
-upperbound = signif(bounds2$upper_bound, digits = 3)
-lowerbound = signif(bounds2$lower_bound, digits = 3)
+Fig2_upper_d0 = create_plot(dgp = dgp, 
+                            d = 0,
+                            upper = TRUE,
+                            weights_tp = list(list(name = "LATE(u1, u2)", int_limits = c(0.35, 0.9))),
+                            weights_ivlike = list(ivslope(dgp)),
+                            bounds = bounds2,
+                            basis = "constant_spline",
+                            title = "Figure 2.1")
 
-constant_spline_weight = c(0, 1, 0.35, 0.9, dgp$pscore) %>%
-  unique() %>% 
-  sort() %>%
-  data.frame(u = .) %>%
-  filter(u != 1) %>%
-  cbind(d0 = bounds2$upper_solution_d0) %>%
-  cbind(d1 = bounds2$upper_solution_d1)
-
-Fig2_upper_D0 = ggplot() +
-  geom_segment(data = constant_spline_weight %>%
-                 get_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-               color = "Maximizing MTR"),
-               linewidth = 1) + 
-  geom_segment(data = LATE_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "LATE(0.35, 0.9)"),
-               linewidth = 1) +
-  geom_segment(data = ivslope_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "IV Slope"),
-               linewidth = 1) +
-  scale_y_continuous(name = NULL,
-                     limits = c(-4,0.5)) + 
-  scale_x_continuous(name = "u",
-                     limits = c(0,1)) +
-  scale_color_manual(name = NULL,
-                     breaks = c("Maximizing MTR", "LATE(0.35, 0.9)", "IV Slope"),
-                     values = c("black", "red", "blue")) +
-  theme(legend.text=element_text(size = 14),
-        legend.position = "bottom") +
-  ggtitle("Figure 2.1 (D=0)")
-
-Fig2_upper_D1 = ggplot() + 
-  geom_segment(data = constant_spline_weight %>%
-                 get_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "Maximizing MTR"),
-               linewidth = 1) + 
-  geom_segment(data = LATE_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "LATE(0.35, 0.9)"),
-               linewidth = 1) +
-  geom_segment(data = ivslope_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-               color = "IV Slope"),
-               linewidth = 1) +
-  scale_y_continuous(name = NULL,
-                     limits = c(-0.5,4)) + 
-  scale_x_continuous(name = "u",
-                     limits = c(0,1)) +
-  scale_color_manual(name = NULL,
-                     breaks = c("Maximizing MTR", "LATE(0.35, 0.9)", "IV Slope"),
-                     values = c("black", "red", "blue")) +
-  theme(legend.text=element_text(size = 14),
-        legend.position = "bottom") +
-  ggtitle("Figure 2.2 (D=1)")
-
-Fig2_upper_D0
-Fig2_upper_D1
+Fig2_upper_d1 = create_plot(dgp = dgp, 
+                            d = 1,
+                            upper = TRUE,
+                            weights_tp = list(list(name = "LATE(u1, u2)", int_limits = c(0.35, 0.9))),
+                            weights_ivlike = list(ivslope(dgp)),
+                            bounds = bounds2,
+                            basis = "constant_spline",
+                            title = "Figure 2.2")
 
 print(glue("Nonparametric bounds: [{lowerbound}, {upperbound}]"))
+Fig2_upper_d0
+Fig2_upper_d1
 ```
 
 Figure 3
-```{r}
-olsslope_weight = compute_average_weights_ivlike(olsslope(dgp), 
-                                                 dgp)
-ivslope_weight = compute_average_weights_ivlike(ivslope(dgp), 
-                                                dgp)
-LATE_weight = compute_average_weights(list(name = "LATE(u1, u2)", 
-                                           int_limits = c(0.35, 0.9)),
-                                      dgp)
-
+```{r, warning = FALSE}
 bounds3 = compute_bounds(tp = late(dgp = dgp, u1 = 0.35, u2 = 0.9), 
                          bases = list(constantspline_basis(c(0, 1, 0.35, 0.9, dgp$pscore)),
                                       constantspline_basis(c(0, 1, 0.35, 0.9, dgp$pscore))),
@@ -222,116 +84,31 @@ bounds3 = compute_bounds(tp = late(dgp = dgp, u1 = 0.35, u2 = 0.9),
 upperbound = signif(bounds3$upper_bound, digits = 3)
 lowerbound = signif(bounds3$lower_bound, digits = 3)
 
-constant_spline_weight = c(0, 1, 0.35, 0.9, dgp$pscore) %>%
-  unique() %>% 
-  sort() %>%
-  data.frame(u = .) %>%
-  filter(u != 1) %>%
-  cbind(d0 = bounds3$upper_solution_d0) %>%
-  cbind(d1 = bounds3$upper_solution_d1)
+Fig3_upper_d0 = create_plot(dgp = dgp, 
+                            d = 0, 
+                            upper = TRUE,
+                            weights_tp = list(list(name = "LATE(u1, u2)", int_limits = c(0.35, 0.9))),
+                            weights_ivlike = list(ivslope(dgp), olsslope(dgp)),
+                            bounds = bounds3,
+                            basis = "constant_spline",
+                            title = "Figure 3.1")
 
-Fig3_upper_D0 = ggplot() +
-  geom_segment(data = constant_spline_weight %>%
-                 get_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "Maximizing MTR"),
-               linewidth = 1) + 
-  geom_segment(data = LATE_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "LATE(0.35, 0.9)"),
-               linewidth = 1) +
-  geom_segment(data = ivslope_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "IV Slope"),
-               linewidth = 1) +
-  geom_segment(data = olsslope_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "OLS Slope"),
-               linewidth = 1) +
-  scale_y_continuous(name = NULL,
-                     limits = c(-4,1)) + 
-  scale_x_continuous(name = "u",
-                     limits = c(0,1)) +
-  scale_color_manual(name = NULL,
-                     breaks = c("Maximizing MTR", "LATE(0.35, 0.9)", "IV Slope", "OLS Slope"),
-                     values = c("black", "red", "blue", "green")) +
-  theme(legend.text=element_text(size = 14),
-        legend.position = "bottom") +
-  ggtitle("Figure 3.1 (D=0)")
-
-Fig3_upper_D1 = ggplot() + 
-  geom_segment(data = constant_spline_weight %>%
-                 get_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "Maximizing MTR"),
-               linewidth = 1) + 
-  geom_segment(data = LATE_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "LATE(0.35, 0.9)"),
-               linewidth = 1) +
-  geom_segment(data = ivslope_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "IV Slope"),
-               linewidth = 1) +
-  geom_segment(data = olsslope_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "OLS Slope"),
-               linewidth = 1) +
-  scale_y_continuous(name = NULL,
-                     limits = c(-1,4)) + 
-  scale_x_continuous(name = "u",
-                     limits = c(0,1)) +
-  scale_color_manual(name = NULL,
-                     breaks = c("Maximizing MTR", "LATE(0.35, 0.9)", "IV Slope", "OLS Slope"),
-                     values = c("black", "red", "blue" ,"green")) +
-  theme(legend.text=element_text(size = 14),
-        legend.position = "bottom") +
-  ggtitle("Figure 3.2 (D=1)")
-
-Fig3_upper_D0
-Fig3_upper_D1
+Fig3_upper_d1 = create_plot(dgp = dgp, 
+                            d = 1, 
+                            upper = TRUE,
+                            weights_tp = list(list(name = "LATE(u1, u2)", int_limits = c(0.35, 0.9))),
+                            weights_ivlike = list(ivslope(dgp), olsslope(dgp)),
+                            bounds = bounds3,
+                            basis = "constant_spline",
+                            title = "Figure 3.2")
 
 print(glue("Nonparametric bounds: [{lowerbound}, {upperbound}]"))
+Fig3_upper_d0
+Fig3_upper_d1
 ```
 
 Figure 4
-```{r}
-ivslope_ind = ivslope_indicator(dgp = dgp,
-                                c(1,2))
-
-ivslope_ind_weightZ1 = compute_average_weights_ivlike(list(name = "IV Slope, Z=1", s = ivslope_ind$s[[1]]), dgp)
-ivslope_ind_weightZ2 = compute_average_weights_ivlike(list(name = "IV Slope, Z=2", s = ivslope_ind$s[[2]]), dgp)
-
+```{r, warning = FALSE}
 bounds4 = compute_bounds(tp = late(dgp = dgp, u1 = 0.35, u2 = 0.9), 
                          bases = list(constantspline_basis(c(0, 1, 0.35, 0.9, dgp$pscore)),
                                       constantspline_basis(c(0, 1, 0.35, 0.9, dgp$pscore))),
@@ -341,119 +118,31 @@ bounds4 = compute_bounds(tp = late(dgp = dgp, u1 = 0.35, u2 = 0.9),
 upperbound = signif(bounds4$upper_bound, digits = 3)
 lowerbound = signif(bounds4$lower_bound, digits = 3)
 
-constant_spline_weight = c(0, 1, 0.35, 0.9, dgp$pscore) %>%
-  unique() %>% 
-  sort() %>%
-  data.frame(u = .) %>%
-  filter(u != 1) %>%
-  cbind(d0 = bounds3$upper_solution_d0) %>%
-  cbind(d1 = bounds3$upper_solution_d1)
+Fig4_upper_d0 = create_plot(dgp = dgp, 
+                            d = 0, 
+                            upper = TRUE,
+                            weights_tp = list(list(name = "LATE(u1, u2)", int_limits = c(0.35, 0.9))),
+                            weights_ivlike = list(ivslope_indicator(dgp = dgp, c(1,2))),
+                            bounds = bounds4,
+                            basis = "constant_spline",
+                            title = "Figure 4.1")
 
-Fig4_upper_D0 = ggplot() +
-  geom_segment(data = constant_spline_weight %>%
-                 get_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "Maximizing MTR"),
-               linewidth = 1) + 
-  geom_segment(data = LATE_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "LATE(0.35, 0.9)"),
-               linewidth = 1) +
-  geom_segment(data = ivslope_ind_weightZ1 %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "IV Slope(1[Z=1])"),
-               linewidth = 1) +
-  geom_segment(data = ivslope_ind_weightZ2 %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "IV Slope(1[Z=2])"),
-               linewidth = 1) +
-  scale_y_continuous(name = NULL,
-                     limits = c(-4.5,1)) + 
-  scale_x_continuous(name = "u",
-                     limits = c(0,1)) +
-  scale_color_manual(name = NULL,
-                     breaks = c("Maximizing MTR", "LATE(0.35, 0.9)", "IV Slope(1[Z=1])", "IV Slope(1[Z=2])"),
-                     values = c("black", "red", "blue" ,"green")) +
-  theme(legend.text=element_text(size = 11),
-        legend.position = "bottom") +
-  ggtitle("Figure 4 (D=0)")
-
-Fig4_upper_D1 = ggplot() + 
-  geom_segment(data = constant_spline_weight %>%
-                 get_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "Maximizing MTR"),
-               linewidth = 1) + 
-  geom_segment(data = LATE_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "LATE(0.35, 0.9)"),
-               linewidth = 1) +
-  geom_segment(data = ivslope_ind_weightZ1 %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "IV Slope(1[Z=1])"),
-               linewidth = 1) +
-  geom_segment(data = ivslope_ind_weightZ2 %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "IV Slope(1[Z=2])"),
-               linewidth = 1) +
-  scale_y_continuous(name = NULL,
-                     limits = c(-4,4.5)) + 
-  scale_x_continuous(name = "u",
-                     limits = c(0,1)) +
-  scale_color_manual(name = NULL,
-                     breaks = c("Maximizing MTR", "LATE(0.35, 0.9)", "IV Slope(1[Z=1])", "IV Slope(1[Z=2])"),
-                     values = c("black", "red", "blue" ,"green")) +
-  theme(legend.text=element_text(size = 11),
-        legend.position = "bottom") +
-  ggtitle("Figure 4 (D=1)")
-
-Fig4_upper_D0
-Fig4_upper_D1
+Fig4_upper_d1 = create_plot(dgp = dgp, 
+                            d = 1, 
+                            upper = TRUE,
+                            weights_tp = list(list(name = "LATE(u1, u2)", int_limits = c(0.35, 0.9))),
+                            weights_ivlike = list(ivslope_indicator(dgp = dgp, c(1,2))),
+                            bounds = bounds4,
+                            basis = "constant_spline",
+                            title = "Figure 4.2")
 
 print(glue("Nonparametric bounds: [{lowerbound}, {upperbound}]"))
+Fig4_upper_d0
+Fig4_upper_d1
 ```
 
 Figure 5
-```{r}
-s_ivlike = make_slist(dgp)
-
-d0z0_weight = compute_average_weights_ivlike(list(name = "saturated", s = s_ivlike$s[[1]]), dgp)
-d1z0_weight = compute_average_weights_ivlike(list(name = "saturated", s = s_ivlike$s[[2]]), dgp)
-d0z1_weight = compute_average_weights_ivlike(list(name = "saturated", s = s_ivlike$s[[3]]), dgp)
-d1z1_weight = compute_average_weights_ivlike(list(name = "saturated", s = s_ivlike$s[[4]]), dgp)
-d0z2_weight = compute_average_weights_ivlike(list(name = "saturated", s = s_ivlike$s[[5]]), dgp)
-d1z2_weight = compute_average_weights_ivlike(list(name = "saturated", s = s_ivlike$s[[6]]), dgp)
-
+```{r, warning = FALSE}
 bounds5 = compute_bounds(tp = late(dgp = dgp, u1 = 0.35, u2 = 0.9), 
              bases = list(constantspline_basis(c(0, 1, 0.35, 0.9, dgp$pscore)),
                           constantspline_basis(c(0, 1, 0.35, 0.9, dgp$pscore))),
@@ -463,143 +152,31 @@ bounds5 = compute_bounds(tp = late(dgp = dgp, u1 = 0.35, u2 = 0.9),
 upperbound = signif(bounds5$upper_bound, digits = 3)
 lowerbound = signif(bounds5$lower_bound, digits = 3)
 
-constant_spline_weight = c(0, 1, 0.35, 0.9, dgp$pscore) %>%
-  unique() %>% 
-  sort() %>%
-  data.frame(u = .) %>%
-  filter(u != 1) %>%
-  cbind(d0 = bounds5$upper_solution_d0) %>%
-  cbind(d1 = bounds5$upper_solution_d1)
+Fig5_upper_d0 = create_plot(dgp = dgp, 
+                            d = 0, 
+                            upper = TRUE,
+                            weights_tp = list(list(name = "LATE(u1, u2)", int_limits = c(0.35, 0.9))),
+                            weights_ivlike = list(make_slist(dgp)),
+                            bounds = bounds5,
+                            basis = "constant_spline",
+                            title = "Figure 5.1")
 
-Fig5_upper_D0 = ggplot() +
-  geom_segment(data = constant_spline_weight %>%
-                 get_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-               color = "Maximizing MTR"),
-               linewidth = 1) + 
-  geom_segment(data = LATE_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "LATE(0.35, 0.9)"),
-               linewidth = 1) +
-  geom_segment(data = d0z0_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = s_ivlike$legendtitle[[1]]),
-               linewidth = 1) +
-  geom_segment(data = d0z1_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = s_ivlike$legendtitle[[3]]),
-               linewidth = 1) +
-  geom_segment(data = d0z2_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = s_ivlike$legendtitle[[5]]),
-               linewidth = 1) +
-  scale_y_continuous(name = NULL,
-                     limits = c(-2.5, 1)) + 
-  scale_x_continuous(name = "u",
-                     limits = c(0,1)) +
-  scale_color_manual(name = NULL,
-                     breaks = c("Maximizing MTR", 
-                                "LATE(0.35, 0.9)", 
-                                s_ivlike$legendtitle[[1]], 
-                                s_ivlike$legendtitle[[3]], 
-                                s_ivlike$legendtitle[[5]]),
-                     values = c("black", "red", "blue", "green", "orange")) +
-  theme(legend.text=element_text(size = 10),
-        legend.position = "bottom") +
-  ggtitle("Figure 5 (D=0)")
-
-Fig5_upper_D1 = ggplot() + 
-  geom_segment(data = constant_spline_weight %>%
-                 get_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-               color = "Maximizing MTR"),
-               linewidth = 1) +
-  geom_segment(data = LATE_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "LATE(0.35, 0.9)"),
-               linewidth = 1) +
-  geom_segment(data = d1z0_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = s_ivlike$legendtitle[[2]]),
-               linewidth = 1) +
-  geom_segment(data = d1z1_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = s_ivlike$legendtitle[[4]]),
-               linewidth = 1) +
-  geom_segment(data = d1z2_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = s_ivlike$legendtitle[[6]]),
-               linewidth = 1) +
-  scale_y_continuous(name = NULL,
-                     limits = c(-2.5, 1)) + 
-  scale_x_continuous(name = "u",
-                     limits = c(0,1)) +
-  scale_color_manual(name = NULL,
-                     breaks = c("Maximizing MTR", 
-                                "LATE(0.35, 0.9)", 
-                                s_ivlike$legendtitle[[2]], 
-                                s_ivlike$legendtitle[[4]], 
-                                s_ivlike$legendtitle[[6]]),
-                     values = c("black", "red", "blue", "green", "orange")) +
-  theme(legend.text=element_text(size = 10),
-        legend.position = "bottom") +
-  ggtitle("Figure 5 (D=1)")
-
-Fig5_upper_D0
-Fig5_upper_D1
+Fig5_upper_d1 = create_plot(dgp = dgp, 
+                            d = 1, 
+                            upper = TRUE,
+                            weights_tp = list(list(name = "LATE(u1, u2)", int_limits = c(0.35, 0.9))),
+                            weights_ivlike = list(make_slist(dgp)),
+                            bounds = bounds5,
+                            basis = "constant_spline",
+                            title = "Figure 5.2")
 
 print(glue("Nonparametric bounds: [{lowerbound}, {upperbound}]"))
+Fig5_upper_d0
+Fig5_upper_d1
 ```
 
 Figure 6
-```{r}
-s_ivlike = make_slist(dgp)
-
-d0z0_weight = compute_average_weights_ivlike(list(name = "saturated", s = s_ivlike$s[[1]]), dgp)
-d1z0_weight = compute_average_weights_ivlike(list(name = "saturated", s = s_ivlike$s[[2]]), dgp)
-d0z1_weight = compute_average_weights_ivlike(list(name = "saturated", s = s_ivlike$s[[3]]), dgp)
-d1z1_weight = compute_average_weights_ivlike(list(name = "saturated", s = s_ivlike$s[[4]]), dgp)
-d0z2_weight = compute_average_weights_ivlike(list(name = "saturated", s = s_ivlike$s[[5]]), dgp)
-d1z2_weight = compute_average_weights_ivlike(list(name = "saturated", s = s_ivlike$s[[6]]), dgp)
-
+```{r, warning = FALSE}
 bounds6 = compute_bounds(tp = late(dgp = dgp, u1 = 0.35, u2 = 0.9), 
                          bases = list(constantspline_basis(c(0, 1, 0.35, 0.9, dgp$pscore)),
                                       constantspline_basis(c(0, 1, 0.35, 0.9, dgp$pscore))),
@@ -609,263 +186,61 @@ bounds6 = compute_bounds(tp = late(dgp = dgp, u1 = 0.35, u2 = 0.9),
 upperbound = round(bounds6$upper_bound, digits = 3)
 lowerbound = round(bounds6$lower_bound, digits = 3)
 
-constant_spline_weight = c(0, 1, 0.35, 0.9, dgp$pscore) %>%
-  unique() %>% 
-  sort() %>%
-  data.frame(u = .) %>%
-  filter(u != 1) %>%
-  cbind(d0 = bounds6$upper_solution_d0) %>%
-  cbind(d1 = bounds6$upper_solution_d1)
+Fig6_upper_d0 = create_plot(dgp = dgp, 
+                            d = 0, 
+                            upper = TRUE,
+                            weights_tp = list(list(name = "LATE(u1, u2)", int_limits = c(0.35, 0.9))),
+                            weights_ivlike = list(make_slist(dgp)),
+                            bounds = bounds6,
+                            basis = "constant_spline",
+                            title = "Figure 6.1")
 
-Fig6_upper_D0 = ggplot() +
-  geom_segment(data = constant_spline_weight %>%
-                 get_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-               color = "Maximizing MTR"),
-               linewidth = 1) +
-  geom_segment(data = LATE_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "LATE(0.35, 0.9)"),
-               linewidth = 1) +
-  geom_segment(data = d0z0_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = s_ivlike$legendtitle[[1]]),
-               linewidth = 1) +
-  geom_segment(data = d0z1_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = s_ivlike$legendtitle[[3]]),
-               linewidth = 1) +
-  geom_segment(data = d0z2_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = s_ivlike$legendtitle[[5]]),
-               linewidth = 1) +
-  scale_y_continuous(name = NULL,
-                     limits = c(-2.5, 1)) + 
-  scale_x_continuous(name = "u",
-                     limits = c(0,1)) +
-  scale_color_manual(name = NULL,
-                     breaks = c("Maximizing MTR", 
-                                "LATE(0.35, 0.9)", 
-                                s_ivlike$legendtitle[[1]], 
-                                s_ivlike$legendtitle[[3]], 
-                                s_ivlike$legendtitle[[5]]),
-                     values = c("black", "red", "blue", "green", "orange")) +
-  theme(legend.text=element_text(size = 10),
-        legend.position = "bottom") +
-  ggtitle("Figure 6 (D=0)")
-
-Fig6_upper_D1 = ggplot() + 
-  geom_segment(data = constant_spline_weight %>%
-                 get_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-               color = "Maximizing MTR"),
-               linewidth = 1) +
-  geom_segment(data = LATE_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "LATE(0.35, 0.9)"),
-               linewidth = 1) +
-  geom_segment(data = d1z0_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = s_ivlike$legendtitle[[2]]),
-               linewidth = 1) +
-  geom_segment(data = d1z1_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = s_ivlike$legendtitle[[4]]),
-               linewidth = 1) +
-  geom_segment(data = d1z2_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = s_ivlike$legendtitle[[6]]),
-               linewidth = 1) +
-  scale_y_continuous(name = NULL,
-                     limits = c(-2.5, 1)) + 
-  scale_x_continuous(name = "u",
-                     limits = c(0,1)) +
-  scale_color_manual(name = NULL,
-                     breaks = c("Maximizing MTR", 
-                                "LATE(0.35, 0.9)", 
-                                s_ivlike$legendtitle[[2]], 
-                                s_ivlike$legendtitle[[4]], 
-                                s_ivlike$legendtitle[[6]]),
-                     values = c("black", "red", "blue", "green", "orange")) +
-  theme(legend.text=element_text(size = 10),
-        legend.position = "bottom") +
-  ggtitle("Figure 6 (D=1)")
-
-Fig6_upper_D0
-Fig6_upper_D1
+Fig6_upper_d1 = create_plot(dgp = dgp, 
+                            d = 1, 
+                            upper = TRUE,
+                            weights_tp = list(list(name = "LATE(u1, u2)", int_limits = c(0.35, 0.9))),
+                            weights_ivlike = list(make_slist(dgp)),
+                            bounds = bounds6,
+                            basis = "constant_spline",
+                            title = "Figure 6.2")
 
 print(glue("Nonparametric bounds: [{lowerbound}, {upperbound}]"))
+Fig6_upper_d0
+Fig6_upper_d1
 ```
 
 Figure 7
-```{r}
-s_ivlike = make_slist(dgp)
-
-d0z0_weight = compute_average_weights_ivlike(list(name = "saturated", s = s_ivlike$s[[1]]), dgp)
-d1z0_weight = compute_average_weights_ivlike(list(name = "saturated", s = s_ivlike$s[[2]]), dgp)
-d0z1_weight = compute_average_weights_ivlike(list(name = "saturated", s = s_ivlike$s[[3]]), dgp)
-d1z1_weight = compute_average_weights_ivlike(list(name = "saturated", s = s_ivlike$s[[4]]), dgp)
-d0z2_weight = compute_average_weights_ivlike(list(name = "saturated", s = s_ivlike$s[[5]]), dgp)
-d1z2_weight = compute_average_weights_ivlike(list(name = "saturated", s = s_ivlike$s[[6]]), dgp)
-
+```{r, warning = FALSE}
 bounds7 = compute_bounds(tp = late(dgp = dgp, u1 = 0.35, u2 = 0.9), 
                          bases = list(bernstein_basis(9),
                                       bernstein_basis(9)),
                          dgp = dgp,
                          assumptions = list("saturated", "decreasing_MTR"))
 
-bernstein_weights_upper_d0 = bounds7$upper_solution_d0
-bernstein_weights_upper_d1 = bounds7$upper_solution_d1
-
 upperbound = round(bounds7$upper_bound, digits = 3)
 lowerbound = round(bounds7$lower_bound, digits = 3)
 
-Fig7_upper_D0 = ggplot() +
-  stat_function(fun = weighted_bernstein_basis,
-                args = list(K = 9,
-                            weights = bernstein_weights_upper_d0),
-                aes(color = "Maximizing MTR")) +
-  geom_segment(data = LATE_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "LATE(0.35, 0.9)"),
-               linewidth = 1) +
-  geom_segment(data = d0z0_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = s_ivlike$legendtitle[[1]]),
-               linewidth = 1) +
-  geom_segment(data = d0z1_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = s_ivlike$legendtitle[[3]]),
-               linewidth = 1) +
-  geom_segment(data = d0z2_weight %>%
-                 get_non_zero_weights(d = 0), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = s_ivlike$legendtitle[[5]]),
-               linewidth = 1) +
-  scale_y_continuous(name = NULL,
-                     limits = c(-2.5, 1)) + 
-  scale_x_continuous(name = "u",
-                     limits = c(0,1)) +
-  scale_color_manual(name = NULL,
-                     breaks = c("Maximizing MTR", 
-                                "LATE(0.35, 0.9)", 
-                                s_ivlike$legendtitle[[1]], 
-                                s_ivlike$legendtitle[[3]], 
-                                s_ivlike$legendtitle[[5]]),
-                     values = c("black", "red", "blue", "green", "orange")) +
-  theme(legend.text=element_text(size = 10),
-        legend.position = "bottom") +
-  ggtitle("Figure 7 (D=0)")
+Fig7_upper_d0 = create_plot(dgp = dgp, 
+                            d = 0, 
+                            upper = TRUE,
+                            weights_tp = list(list(name = "LATE(u1, u2)", int_limits = c(0.35, 0.9))),
+                            weights_ivlike = list(make_slist(dgp)),
+                            bounds = bounds7,
+                            basis = "weighted_bernstein",
+                            title = "Figure 7.1")
 
-Fig7_upper_D1 = ggplot() +
-  stat_function(fun = weighted_bernstein_basis,
-                args = list(K = 9,
-                            weights = bernstein_weights_upper_d1),
-                aes(color = "Maximizing MTR")) +
-  geom_segment(data = LATE_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = "LATE(0.35, 0.9)"),
-               linewidth = 1) +
-  geom_segment(data = d1z0_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = s_ivlike$legendtitle[[2]]),
-               linewidth = 1) +
-  geom_segment(data = d1z1_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = s_ivlike$legendtitle[[4]]),
-               linewidth = 1) +
-  geom_segment(data = d1z2_weight %>%
-                 get_non_zero_weights(d = 1), 
-               aes(x = u_start, 
-                   xend = u_end, 
-                   y = avg_weight, 
-                   yend = avg_weight,
-                   color = s_ivlike$legendtitle[[6]]),
-               linewidth = 1) +
-  scale_y_continuous(name = NULL,
-                     limits = c(-0.5, 2)) + 
-  scale_x_continuous(name = "u",
-                     limits = c(0,1)) +
-  scale_color_manual(name = NULL,
-                     breaks = c("Maximizing MTR", 
-                                "LATE(0.35, 0.9)", 
-                                s_ivlike$legendtitle[[2]], 
-                                s_ivlike$legendtitle[[4]], 
-                                s_ivlike$legendtitle[[6]]),
-                     values = c("black", "red", "blue", "green", "orange")) +
-  theme(legend.text=element_text(size = 10),
-        legend.position = "bottom") +
-  ggtitle("Figure 7 (D=1)")
-
-Fig7_upper_D0
-Fig7_upper_D1
+Fig7_upper_d1 = create_plot(dgp = dgp, 
+                            d = 1, 
+                            upper = TRUE,
+                            weights_tp = list(list(name = "LATE(u1, u2)", int_limits = c(0.35, 0.9))),
+                            weights_ivlike = list(make_slist(dgp)),
+                            bounds = bounds7,
+                            basis = "weighted_bernstein",
+                            title = "Figure 7.2")
 
 print(glue("Nonparametric bounds: [{lowerbound}, {upperbound}]"))
+Fig7_upper_d0
+Fig7_upper_d1
 ```
 
 Figure 8
