@@ -99,12 +99,12 @@ late = function(dgp, u1, u2, l = 1){
 #' @return A TargetParameter object for ATT.
 #' @export
 att = function(dgp, l = 1){
-  prd1 = dgp$pscore * dgp$densZ
+  prd1 = sum(dgp$pscore * dgp$densZ)
 
   name = "ATT"
 
   int_limits = function(z){
-    return(c(0, dgp$find_pscore(0)))
+    return(c(0, dgp$find_pscore(z)))
   }
   int_constant = function(l,d,z){
     return((l==1)*(2*d-1)/prd1*dgp$find_density(z))
