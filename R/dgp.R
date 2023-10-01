@@ -93,3 +93,21 @@ dgp_MST2018 = function() {
 
   return(DGP$new(suppZ, densZ, pscoreZ, list(mtr0, mtr1)))
 }
+
+#' Create DGP Object for MST2018 Model
+#'
+#' This function creates a DGP object based on inputs.
+#' @field suppZ Support of Z.
+#' @field densZ Density of Z.
+#' @field pscore Propensity score.
+#' @field mtrs List of Marginal Treatment Response (MTR) functions.
+#' @return A new DGP object.
+#' @export
+create_dgp = function(suppZ, densZ, pscoreZ, basis0, theta0, basis1, theta1){
+
+  mtr0 = MTR(basis0, theta0)
+  mtr1 = MTR(basis1, theta1)
+
+  return(DGP$new(suppZ, densZ, pscoreZ, list(mtr0, mtr1)))
+
+}
