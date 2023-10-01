@@ -91,3 +91,26 @@ late = function(dgp, u1, u2, l = 1){
 
   return(TargetParameter(name, int_limits, int_constant, legendtitle))
 }
+
+#' Create LATE Target Parameter
+#'
+#' @param dgp Data Generating Process object.
+#' @param l Model index (default is 1).
+#' @return A TargetParameter object for ATT.
+#' @export
+att = function(dgp, l = 1){
+  prd1 = dgp$pscore * dgp$densZ
+
+  name = "ATT"
+
+  int_limits = function(z){
+    return(c(0, dgp$find_pscore(0)))
+  }
+  int_constant = function(l,d,z){
+    return((l==1)*(2*d-1)/prd1*dgp$find_density(z))
+  }
+
+
+  return(TargetParameter(name, int_limits, int_constant, name))
+
+}
