@@ -28,95 +28,108 @@ compute_bounds = function(tp, bases, dgp, assumptions = NULL){
   const.dir = c(rep("<=", lenobj),
                 rep(">=", lenobj))
 
-  for(i in 1:length(assumptions)){
+  if(is.null(assumptions) == FALSE){
+    for(i in 1:length(assumptions)){
 
-    if(str_detect(assumptions[[i]], "ivslopeind") == TRUE){
+      if(str_detect(assumptions[[i]], "ivslopeind") == TRUE){
 
-      support = str_match(assumptions[[i]], "\\{([\\d,]+)\\}")[,2] %>%
-        str_split(pattern = ",") %>%
-        .[[1]] %>%
-        as.integer()
+        support = str_match(assumptions[[i]], "\\{([\\d,]+)\\}")[,2] %>%
+          str_split(pattern = ",") %>%
+          .[[1]] %>%
+          as.integer()
 
-      gamma_s_vector = compute_gamma_s(bases = bases,
-                                       dgp = dgp,
-                                       slist = "ivslopeind",
-                                       param = support) %>%
-        unlist()
+        gamma_s_vector = compute_gamma_s(bases = bases,
+                                         dgp = dgp,
+                                         slist = "ivslopeind",
+                                         param = support) %>%
+          unlist()
 
-      for(j in 1:length(support)){
-        const.mat = rbind(const.mat,
-                          gamma_s_vector[seq(j, length(gamma_s_vector), by = length(support))])
+        for(j in 1:length(support)){
+          const.mat = rbind(const.mat,
+                            gamma_s_vector[seq(j, length(gamma_s_vector), by = length(support))])
+        }
+
+        beta_s_vector = compute_beta_s(dgp, "ivslopeind", param = support)
+
+        const.rhs = c(const.rhs, beta_s_vector)
+
+        const.dir = c(const.dir, rep("=", times = length(beta_s_vector)))
+
+
+      } else if(assumptions[[i]] == "saturated"){
+
+        gamma_s_vector = unlist(compute_gamma_s(bases = bases,
+                                                dgp = dgp,
+                                                slist = assumptions[[i]]))
+
+
+        for(j in 1:(length(dgp$mtrs)*length(dgp$suppZ))){
+          const.mat = rbind(const.mat,
+                            gamma_s_vector[seq(j, length(gamma_s_vector), by = length(dgp$mtrs)*length(dgp$suppZ))])
+        }
+
+        beta_s_vector = compute_beta_s(dgp, assumptions[[i]])
+
+        const.rhs = c(const.rhs, beta_s_vector)
+
+        const.dir = c(const.dir, rep("=", times = length(beta_s_vector)))
+
+      } else if(assumptions[[i]] == "decreasing_MTR"){
+
+        # Create an nxn 0 matrix
+        m0 = matrix(0, nrow = lenobj/2, ncol = lenobj/2)
+
+        # Create an nxn identity matrix
+        m = diag(1, nrow = lenobj/2, ncol = lenobj/2)
+
+        # Fill in the elements directly to the right of the diagonal with -1s
+        # This is how to require decreasing MTR function
+        for (i in 1:(nrow(m) - 1)) {
+          m[i, i + 1] = -1
+        }
+
+        m = m %>%
+          cbind(m0) %>%
+          rbind(m0 %>%
+                  cbind(m))
+
+        const.mat = const.mat %>%
+          rbind(m)
+
+        const.rhs = const.rhs %>%
+          c(rep(0, times = lenobj))
+
+        const.dir = const.dir %>%
+          c(rep(">=", times = lenobj))
+
+      } else if(assumptions[[i]] == "FOC"){
+
+        const.mat = const.mat %>%
+          rbind(expectBBPrime(dgp = dgp, bases))
+
+        const.rhs = c(const.rhs,
+                      expectBY(dgp, bases))
+
+        const.dir = c(const.dir,
+                      rep("=", lenobj))
+
+      } else{
+
+        const.mat = const.mat %>%
+          rbind(compute_gamma_s(bases = bases,
+                                dgp = dgp,
+                                slist = assumptions[[i]]) %>%
+                  unlist())
+
+        beta_s_vector = compute_beta_s(dgp, assumptions[[i]])
+
+        const.rhs = const.rhs %>%
+          c(beta_s_vector)
+
+        const.dir = const.dir %>%
+          c(rep("=", length(beta_s_vector)))
+
       }
-
-      beta_s_vector = compute_beta_s(dgp, "ivslopeind", param = support)
-
-      const.rhs = c(const.rhs, beta_s_vector)
-
-      const.dir = c(const.dir, rep("=", times = length(beta_s_vector)))
-
-
-    } else if(assumptions[[i]] == "saturated"){
-
-      gamma_s_vector = unlist(compute_gamma_s(bases = bases,
-                                              dgp = dgp,
-                                              slist = assumptions[[i]]))
-
-
-      for(j in 1:(length(dgp$mtrs)*length(dgp$suppZ))){
-        const.mat = rbind(const.mat,
-                          gamma_s_vector[seq(j, length(gamma_s_vector), by = length(dgp$mtrs)*length(dgp$suppZ))])
-      }
-
-      beta_s_vector = compute_beta_s(dgp, assumptions[[i]])
-
-      const.rhs = c(const.rhs, beta_s_vector)
-
-      const.dir = c(const.dir, rep("=", times = length(beta_s_vector)))
-
-    } else if(assumptions[[i]] == "decreasing_MTR"){
-
-      # Create an nxn 0 matrix
-      m0 = matrix(0, nrow = lenobj/2, ncol = lenobj/2)
-
-      # Create an nxn identity matrix
-      m = diag(1, nrow = lenobj/2, ncol = lenobj/2)
-
-      # Fill in the elements directly to the right of the diagonal with -1s
-      # This is how to require decreasing MTR function
-      for (i in 1:(nrow(m) - 1)) {
-        m[i, i + 1] = -1
-      }
-
-      m = m %>%
-        cbind(m0) %>%
-        rbind(m0 %>%
-                cbind(m))
-
-      const.mat = const.mat %>%
-        rbind(m)
-
-      const.rhs = const.rhs %>%
-        c(rep(0, times = lenobj))
-
-      const.dir = const.dir %>%
-        c(rep(">=", times = lenobj))
-
-    } else{
-
-      const.mat = const.mat %>%
-        rbind(compute_gamma_s(bases = bases,
-                              dgp = dgp,
-                              slist = assumptions[[i]]) %>%
-                unlist())
-
-      beta_s_vector = compute_beta_s(dgp, assumptions[[i]])
-
-      const.rhs = const.rhs %>%
-        c(beta_s_vector)
-
-      const.dir = const.dir %>%
-        c(rep("=", length(beta_s_vector)))
-
     }
   }
 

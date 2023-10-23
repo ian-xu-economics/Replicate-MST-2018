@@ -2,7 +2,7 @@
 % Please edit documentation in R/target_parameters.R
 \name{att}
 \alias{att}
-\title{Create LATE Target Parameter}
+\title{Create ATT Target Parameter}
 \usage{
 att(dgp, l = 1)
 }
@@ -15,5 +15,5 @@ att(dgp, l = 1)
 A TargetParameter object for ATT.
 }
 \description{
-Create LATE Target Parameter
+Create ATT Target Parameter
 }

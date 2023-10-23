@@ -92,7 +92,7 @@ late = function(dgp, u1, u2, l = 1){
   return(TargetParameter(name, int_limits, int_constant, legendtitle))
 }
 
-#' Create LATE Target Parameter
+#' Create ATT Target Parameter
 #'
 #' @param dgp Data Generating Process object.
 #' @param l Model index (default is 1).
